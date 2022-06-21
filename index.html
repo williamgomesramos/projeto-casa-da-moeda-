@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Casa de Câmbio - converte moeda </title>
+        <link rel="stylesheet" href="style.css">
+
+          
+    </head>
+    <body>
+
+                <div id="idsecao" class="">
+                    <div id="idFormData" class="linha" style="padding-left: 10px;">
+                        <label for="idData">Data</label>
+                    </div>        
+                    <div id="idFormData" class="linha" style="padding-left: 10px;">
+                        <input type="text" name="nmData" id="idData"placeholder="DD-MM-YYYY">
+                    </div>
+                    <div class="linha">
+                        <section class="secao">
+                            <div class="coluna">
+                                <label for="idValor">Valor</label>
+                            </div>
+                            <div class="coluna">
+                                <label for="idMoedaInicial">Moeda</label>
+                            </div>
+                            <div class="coluna">
+                                <label for="idMoedaFinal">Moeda</label>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="linha">
+                        <section class="secao">
+                            <div class="coluna">
+                                <input type="number" name="nmValor" id="idValor" placeholder="0,00" min="0">    
+                            </div>
+                            <div class="coluna">
+                                <select name="nmMoedaInicial" id="idMoedaInicial">
+                                    <option value="RS">Real</option>
+                                    <option value="AUD">Dólar Australiano</option>
+                                    <option value="CAD">Dólar Canadense</option>
+                                    <option value="CHF">Franco Suíço</option>
+                                    <option value="EUR">Euro</option>
+                                    <option value="GBP">Libra Esterlina</option>
+                                    <option value="JPY">Iene</option>
+                                    <option value="NOK">Coroa Norueguesa</option>
+                                    <option value="SEK">Coroa Sueca</option>
+                                    <option value="USD">Dólar dos Estados Unidos</option>
+                                </select>
+                            </div>
+                            <div class="coluna">
+                                <select name="nmMoedaFinal" id="idMoedaFinal">
+                                    <option value="RS">Real</option>
+                                    <option value="AUD">Dólar Australiano</option>
+                                    <option value="CAD">Dólar Canadense</option>
+                                    <option value="CHF">Franco Suíço</option>
+                                    <option value="EUR">Euro</option>
+                                    <option value="GBP">Libra Esterlina</option>
+                                    <option value="JPY">Iene</option>
+                                    <option value="NOK">Coroa Norueguesa</option>
+                                    <option value="SEK">Coroa Sueca</option>
+                                    <option value="USD">Dólar dos Estados Unidos</option>
+                                </select>   
+                            </div>
+                        </section>       
+                    </div>
+                    <br>
+                    <div class="linha" style="text-align: center;">
+                        <input class="button" type="button" name="nmBtConverter" id="idBtConverter" value="Converter">
+                    </div>
+        </form>
+        <div class="linha" id="idMostrarResultados" style="visibility: hidden; padding: 10px;">
+            <br><br>
+            <h3>Resultado</h3>
+            <label for="idData"><b>Data da Cotação:</b></label>
+            <output id="idDataInformada"></output><br>
+            <label for="idCotacaoOriginal"><b>Cotação Orginal [Moeda]:</b></label>
+            <output id="idCotacaoOriginal"></output><br>
+            <label for="idCotacaoConversao"><b>Cotação Conversão [Moeda]:</b></label>
+            <output id="idCotacaoConversao"></output><br>
+            <label for="idResultadoConversao"><b>Resultado da Conversão:</b></label>
+            <output id="idResultadoConversao"></output><br>
+        </div>
+        <script>
+            btCotacao = document.getElementById("idBtConverter");
+
+            btCotacao.onclick = async function(){
+
+                                let moedaInicial = document.getElementById("idMoedaInicial").value;
+                let moedaFinal = document.getElementById("idMoedaFinal").value;
+                let data = document.getElementById("idData").value;
+                let valor = Number(document.getElementById("idValor").value);
+                
+                await converterMoedas(data,valor,moedaInicial,moedaFinal);
+            }
+            
+            async function buscarCotacao(moeda,data) {
+                var retornoCotacao;
+
+                    //Solicitcao das ifnromações
+                    var resposta = await fetch ("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoMoedaDia(moeda=@moeda,dataCotacao=@dataCotacao)?@moeda='"+moeda+"'&@dataCotacao='"+data+"'&$top=100&$format=json&$select=paridadeCompra,paridadeVenda,cotacaoCompra,cotacaoVenda,dataHoraCotacao,tipoBoletim");
+                    var resultado= await resposta.json();   
+
+                    //Captura dos resultados. Com a utilização do foreach ira percorrer todo o array até chegar sempre na ultima cotação
+                    resultado.value.forEach(function(info, i) {
+                        retornoCotacao= info.cotacaoVenda;
+                    });
+                
+                //Retorna o valor da última cotação
+                return retornoCotacao;
+            }
+
+            async function converterMoedas(data, valor, moedaInicial, moedaFinal){       
+                let cotacaoMoedaInicial=1.0;
+                let cotacaoMoedaFinal=1.0;
+                let resultadoConversao;
+                
+                if(moedaInicial == "RS"){
+                    if(moedaFinal=="RS"){
+                       resultadoConversao = valor;
+                    }
+                    else{
+                        cotacaoMoedaFinal = await buscarCotacao(moedaFinal, data);
+
+                        resultadoConversao = await valor/cotacaoMoedaFinal;
+                    }
+                }
+                else{
+                    if(moedaFinal == "RS"){
+                        cotacaoMoedaInicial = await buscarCotacao(moedaInicial, data);        
+                        
+                        resultadoConversao = await cotacaoMoedaInicial*valor;
+                    }
+                    else{
+                        cotacaoMoedaInicial = await buscarCotacao(moedaInicial, data);        
+                        cotacaoMoedaFinal =  await buscarCotacao(moedaFinal,data);
+                        
+                        resultadoConversao = await (valor*cotacaoMoedaInicial)/cotacaoMoedaFinal;
+                    }
+                }        
+                document.getElementById("idMostrarResultados").style.visibility="visible";
+                document.getElementById("idMostrarResultados").style.display="block";
+                
+                document.getElementById("idDataInformada").value = data;
+                document.getElementById("idCotacaoOriginal").value = cotacaoMoedaInicial.toFixed(4) + "["+moedaInicial+"]";
+                document.getElementById("idCotacaoConversao").value = cotacaoMoedaFinal.toFixed(4)+ "["+moedaFinal+"]";
+                document.getElementById("idResultadoConversao").value = resultadoConversao.toFixed(4);
+            }
+        </script>
+    </body>
+</html>
